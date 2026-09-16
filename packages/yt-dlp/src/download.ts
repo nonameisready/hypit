@@ -59,10 +59,19 @@ function serviceProject(): string {
  * nothing under the bound. `--no-playlist` keeps a link inside a playlist from fetching the playlist.
  * The container follows the target's extension.
  */
-export async function downloadVideo(url: string, target: string): Promise<void> {
+export type DownloadVideoOptions = {
+  /** Maximum time allowed for the pinned yt-dlp process. Defaults to 15 minutes. */
+  readonly timeoutMs?: number;
+};
+
+export async function downloadVideo(url: string, target: string, options: DownloadVideoOptions = {}): Promise<void> {
   const container = extname(target).slice(1).toLowerCase();
   if (!["mp4", "mkv", "webm", "mov"].includes(container)) {
     throw new Error(`${target} must end in .mp4, .mkv, .webm or .mov`);
+  }
+  const timeoutMs = options.timeoutMs ?? 900_000;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) {
+    throw new Error(`yt-dlp timeout must be a positive safe integer, got ${timeoutMs}`);
   }
   const work = await mkdtemp(join(tmpdir(), "hypit-fetch-"));
   try {
@@ -74,7 +83,7 @@ export async function downloadVideo(url: string, target: string): Promise<void> 
       "--format-sort", "res:1080,vcodec:h264",
       "--output", join(work, "video.%(ext)s"),
       url,
-    ], { encoding: "utf8", windowsHide: true, timeout: 900_000 });
+    ], { encoding: "utf8", windowsHide: true, timeout: timeoutMs });
 
     if (result.error !== undefined && (result.error as NodeJS.ErrnoException).code === "ENOENT") {
       throw new Error(

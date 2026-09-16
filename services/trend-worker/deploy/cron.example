@@ -1,0 +1,2 @@
+# Run from the Hypit repository every two hours at minute 7.
+7 */2 * * * cd /Users/amao/Projects/hypit && /opt/homebrew/bin/pnpm trend:run >> data/trend-worker.log 2>&1

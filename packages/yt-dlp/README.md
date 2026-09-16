@@ -14,8 +14,9 @@ Runtime Profile and creates no Build.
 
 - `isVideoUrl(value)` recognizes HTTP and HTTPS links. Local paths, including Windows drive paths,
   remain file inputs.
-- `downloadVideo(url, target)` downloads one video to the given path. Its caller owns destination
-  preparation and overwrite policy. The target extension must be `.mp4`, `.mkv`, `.webm` or `.mov`.
+- `downloadVideo(url, target, options?)` downloads one video to the given path. Its caller owns
+  destination preparation and overwrite policy. The target extension must be `.mp4`, `.mkv`, `.webm`
+  or `.mov`. `options.timeoutMs` can override the default 15-minute yt-dlp timeout.
 
 The downloader invokes the locked Python project in `services/yt-dlp` through `uv`, located relative
 to the installed Distribution. Ship its `pyproject.toml` and `uv.lock` with this package's source.

@@ -3496,6 +3496,25 @@ importers:
 
   services/image-opencv: {}
 
+  services/trend-worker:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: 3.1103.0
+        version: 3.1103.0
+      '@hypit/yt-dlp':
+        specifier: workspace:*
+        version: link:../../packages/yt-dlp
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.1
+        version: 24.10.1
+      tsx:
+        specifier: 4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   services/whisperx: {}
 
   services/yt-dlp: {}

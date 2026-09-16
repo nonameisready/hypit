@@ -178,6 +178,11 @@
     "test:runtime-scale": "node test/run.mjs runtime-scale",
     "test:whisperx-service": "uv run --project services/whisperx --frozen python -m unittest discover -s services/whisperx/tests -p \"test_*.py\"",
     "test:image-opencv": "node test/run.mjs image-opencv",
+    "trend:discover": "pnpm --filter @hypit/trend-worker discover",
+    "trend:rank": "pnpm --filter @hypit/trend-worker rank",
+    "trend:download": "pnpm --filter @hypit/trend-worker download",
+    "trend:upload": "pnpm --filter @hypit/trend-worker upload",
+    "trend:run": "pnpm --filter @hypit/trend-worker run",
     "hypit": "node bin/hypit.mjs",
     "studio": "node bin/hypit.mjs studio",
     "prepack": "npm run build:public-types"
