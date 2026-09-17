@@ -18,7 +18,7 @@ export type WorkerConfig = {
   readonly manualUrls: readonly string[];
   readonly youtubeApiKey: string | undefined;
   readonly youtubeRegionCode: string;
-  readonly youtubeQuery: string;
+  readonly youtubeQuery: string | undefined;
   readonly topN: number;
   readonly minViralScore: number | undefined;
   readonly maxVideoAgeHours: number;
@@ -103,7 +103,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, overrides: Conf
     manualUrls,
     youtubeApiKey: text(env, "YOUTUBE_API_KEY"),
     youtubeRegionCode: text(env, "YOUTUBE_REGION_CODE", "US")!,
-    youtubeQuery: text(env, "YOUTUBE_QUERY", "shorts")!,
+    youtubeQuery: text(env, "YOUTUBE_QUERY"),
     topN: integer(env, "TOP_N", 20, 1),
     minViralScore: optionalNumber(env, "MIN_VIRAL_SCORE"),
     maxVideoAgeHours: number(env, "MAX_VIDEO_AGE_HOURS", 72, 0),

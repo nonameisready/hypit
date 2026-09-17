@@ -1,6 +1,29 @@
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { loadConfig, requireR2 } from "../config.js";
 import { createPipeline } from "../pipeline/pipeline.js";
 import { R2Storage } from "../storage/r2.js";
+
+const serviceDirectory = resolve(fileURLToPath(new URL("../..", import.meta.url)));
+export const defaultEnvPath = resolve(serviceDirectory, ".env");
+
+function isMissingFile(error: unknown): boolean {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
+}
+
+/** Load the service-local environment without replacing values supplied by the shell or launchd. */
+export function loadWorkerEnv(path = defaultEnvPath): void {
+  const existing = new Map(Object.entries(process.env));
+  try {
+    process.loadEnvFile(path);
+  } catch (error) {
+    if (!isMissingFile(error)) throw error;
+  }
+  for (const [key, value] of existing) {
+    if (value !== undefined) process.env[key] = value;
+  }
+}
 
 function usage(): string {
   return "Usage: trend-worker <discover|rank|download|upload|run> [--url <public-url>]\n";
@@ -26,8 +49,9 @@ function parse(argv: readonly string[]): { readonly command: string; readonly ur
   return { command, urls, json };
 }
 
-async function main(): Promise<void> {
-  const { command, urls, json } = parse(process.argv.slice(2));
+export async function runCli(argv = process.argv.slice(2)): Promise<void> {
+  const { command, urls, json } = parse(argv);
+  loadWorkerEnv();
   const config = loadConfig(process.env, { manualUrls: urls });
   const storageNeeded = command === "upload" || command === "run";
   let storage: R2Storage | undefined;
@@ -50,7 +74,9 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  runCli().catch((error: unknown) => {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+  });
+}

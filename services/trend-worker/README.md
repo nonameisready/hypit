@@ -10,9 +10,11 @@ The worker runs one batch and exits. It does not contain an infinite scheduler. 
 
 ## Setup
 
-Copy `.env.example` to `.env` or export the variables in your shell. The worker reads environment
-variables directly; it does not persist credentials. `R2_ENDPOINT` should be the S3-compatible R2
-endpoint for the account.
+Copy `.env.example` to `services/trend-worker/.env` or export the variables in your shell. The CLI
+automatically loads that service-local `.env` before parsing configuration, including when invoked
+by `pnpm trend:run` from launchd. Existing shell or launchd variables take precedence over values in
+the file. The worker reads environment variables directly; it does not persist credentials.
+`R2_ENDPOINT` should be the S3-compatible R2 endpoint for the account.
 
 The local database defaults to `data/trend-worker.sqlite`. Download staging lives below
 `data/tmp/`. Set `DELETE_LOCAL_AFTER_UPLOAD=false` when retaining local copies is necessary.
@@ -33,8 +35,10 @@ an official provider are needed for useful velocity scores.
 ## Providers
 
 `TrendProvider` is the extension point in `src/providers/provider.ts`. The included YouTube provider
-uses the public YouTube Data API when `YOUTUBE_API_KEY` is configured. The manual provider is the
-fallback for all three platforms. TikTok and Instagram discovery should be added through approved
+uses the public YouTube Data API when `YOUTUBE_API_KEY` is configured. It sends `publishedAfter`
+based on `MAX_VIDEO_AGE_HOURS`, keeping the API request inside the same recent window used by the
+SQLite ranking safety filter. `YOUTUBE_QUERY` is optional; when blank, the provider omits `q`.
+The manual provider is the fallback for all three platforms. TikTok and Instagram discovery should be added through approved
 official/public API providers when the required access is available; the worker does not scrape
 pages or bypass access controls.
 

@@ -8,7 +8,7 @@ export function createProviders(config: WorkerConfig): readonly TrendProvider[] 
     if (name === "manual") return new ManualUrlProvider(config.trendUrlsFile, config.manualUrls);
     if (name === "youtube") {
       if (config.youtubeApiKey === undefined) throw new Error("TREND_PROVIDERS includes youtube but YOUTUBE_API_KEY is missing");
-      return new YouTubeProvider(config.youtubeApiKey, config.youtubeQuery, config.youtubeRegionCode);
+      return new YouTubeProvider(config.youtubeApiKey, config.youtubeQuery, config.youtubeRegionCode, config.maxVideoAgeHours);
     }
     throw new Error(`unknown trend provider ${name}`);
   });

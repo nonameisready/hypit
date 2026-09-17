@@ -16,18 +16,33 @@ function integer(value: string | undefined): number {
 
 export class YouTubeProvider implements TrendProvider {
   readonly name = "youtube";
+  private readonly query: string | undefined;
+  private readonly maxVideoAgeHours: number;
 
-  constructor(private readonly apiKey: string, private readonly query: string, private readonly regionCode: string) {}
+  constructor(
+    private readonly apiKey: string,
+    query: string | undefined,
+    private readonly regionCode: string,
+    maxVideoAgeHours: number,
+  ) {
+    if (!Number.isFinite(maxVideoAgeHours) || maxVideoAgeHours < 0) {
+      throw new Error(`YouTube max video age must be a non-negative number, got ${maxVideoAgeHours}`);
+    }
+    this.query = query?.trim() || undefined;
+    this.maxVideoAgeHours = maxVideoAgeHours;
+  }
 
   async fetchTrendingVideos(context: ProviderContext): Promise<readonly unknown[]> {
+    const publishedAfter = new Date(Date.parse(context.discoveredAt) - this.maxVideoAgeHours * 3_600_000).toISOString();
     const search = await this.request("search", {
       part: "snippet",
       type: "video",
       videoDuration: "short",
       order: "viewCount",
       maxResults: "50",
-      q: this.query,
+      publishedAfter,
       regionCode: this.regionCode,
+      ...(this.query === undefined ? {} : { q: this.query }),
     }, context);
     const ids = Array.isArray(search.items)
       ? search.items.map((item) => (item as YouTubeItem).id?.videoId).filter((id): id is string => id !== undefined)
