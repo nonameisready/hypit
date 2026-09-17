@@ -21,3 +21,8 @@ export function metadataObjectKey(platform: Platform, videoId: string, date: str
   const [year, month, day] = dateParts(date);
   return `metadata/${segment(platform)}/${year}/${month}/${day}/${segment(videoId)}.json`;
 }
+
+export function archiveMetadataObjectKey(platform: Platform, videoId: string, date: string | Date): string {
+  const [year, month, day] = dateParts(date);
+  return `archive/metadata/${segment(platform)}/${year}/${month}/${day}/${segment(videoId)}.json`;
+}

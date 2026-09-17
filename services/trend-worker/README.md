@@ -6,7 +6,7 @@ Hypit's pinned `@hypit/yt-dlp` implementation, and uploads the original media pl
 Cloudflare R2.
 
 The worker runs one batch and exits. It does not contain an infinite scheduler. Use the examples in
-`deploy/` to invoke `pnpm trend:run` every two hours.
+`deploy/` to invoke `pnpm trend:run` hourly (or from your existing scheduler).
 
 ## Setup
 
@@ -54,8 +54,21 @@ pnpm trend:discover -- --url 'https://youtube.com/shorts/example'
 ```
 
 `trend:run` performs discovery, snapshot persistence, ranking, top-N download, R2 upload, metadata
-upload, and cleanup. A failure for one provider or video is recorded and logged while the batch
-continues.
+upload, metadata refresh, and retention cleanup. `TOP_N` is only the ranking pool; new downloads are
+bounded by `MAX_NEW_DOWNLOADS_PER_RUN` and `MAX_NEW_DOWNLOADS_PER_DAY`. A candidate needs the
+configured number of metric snapshots and is never downloaded again after a successful upload.
+
+The hot library retains non-classic raw videos for `HOT_RETENTION_DAYS`. The strongest uploaded
+videos are classified as classics, up to `MAX_CLASSIC_VIDEOS`, subject to the `R2_SOFT_LIMIT_GB`
+soft cap for raw MP4 bytes. Maintenance targets 7.5GB when the configured cap is 8GB, leaving
+headroom for hourly uploads. Expired or storage-pressure videos are moved to `archive/metadata/`
+before their active raw and metadata objects are removed. The archive namespace is permanent and is
+not scanned by Adscream's active metadata sync.
+
+Run maintenance without discovery with `pnpm trend:prune` (or `pnpm --filter @hypit/trend-worker
+run prune`). Use `pnpm --filter @hypit/trend-worker prune -- --dry-run` to print the planned archive
+and raw-object deletions without changing SQLite or R2. `pnpm trend:stats` reports database counts,
+UTC-day downloads, raw object count, and raw-byte usage.
 
 ## R2 layout
 
@@ -67,6 +80,10 @@ metadata/{platform}/YYYY/MM/DD/{video_id}.json
 The media object is uploaded from the completed local file. SHA-256 is calculated before upload;
 when another successful upload has the same hash, the existing media object is reused and only the
 new metadata object is written.
+
+Adscream's existing Postgres sync is currently upsert-oriented: archiving active metadata does not
+automatically delete old Adscream database rows. This worker intentionally does not perform any
+cross-repository database deletion.
 
 ## Scheduling examples
 

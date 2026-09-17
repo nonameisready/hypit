@@ -183,6 +183,8 @@
     "trend:download": "pnpm --filter @hypit/trend-worker download",
     "trend:upload": "pnpm --filter @hypit/trend-worker upload",
     "trend:run": "pnpm --filter @hypit/trend-worker run",
+    "trend:prune": "pnpm --filter @hypit/trend-worker run prune",
+    "trend:stats": "pnpm --filter @hypit/trend-worker run stats",
     "hypit": "node bin/hypit.mjs",
     "studio": "node bin/hypit.mjs studio",
     "prepack": "npm run build:public-types"

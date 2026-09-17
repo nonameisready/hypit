@@ -22,6 +22,12 @@ export type WorkerConfig = {
   readonly topN: number;
   readonly minViralScore: number | undefined;
   readonly maxVideoAgeHours: number;
+  readonly minSnapshotsForDownload: number;
+  readonly maxNewDownloadsPerRun: number;
+  readonly maxNewDownloadsPerDay: number;
+  readonly hotRetentionDays: number;
+  readonly r2SoftLimitGb: number;
+  readonly maxClassicVideos: number;
   readonly deleteLocalAfterUpload: boolean;
   readonly downloadTimeoutMs: number;
   readonly uploadTimeoutMs: number;
@@ -107,6 +113,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, overrides: Conf
     topN: integer(env, "TOP_N", 20, 1),
     minViralScore: optionalNumber(env, "MIN_VIRAL_SCORE"),
     maxVideoAgeHours: number(env, "MAX_VIDEO_AGE_HOURS", 72, 0),
+    minSnapshotsForDownload: integer(env, "MIN_SNAPSHOTS_FOR_DOWNLOAD", 2, 1),
+    maxNewDownloadsPerRun: integer(env, "MAX_NEW_DOWNLOADS_PER_RUN", 3, 1),
+    maxNewDownloadsPerDay: integer(env, "MAX_NEW_DOWNLOADS_PER_DAY", 30, 1),
+    hotRetentionDays: integer(env, "HOT_RETENTION_DAYS", 14, 1),
+    r2SoftLimitGb: number(env, "R2_SOFT_LIMIT_GB", 8, Number.MIN_VALUE),
+    maxClassicVideos: integer(env, "MAX_CLASSIC_VIDEOS", 400, 0),
     deleteLocalAfterUpload: boolean(env, "DELETE_LOCAL_AFTER_UPLOAD", true),
     downloadTimeoutMs: integer(env, "DOWNLOAD_TIMEOUT_MS", 900_000, 1),
     uploadTimeoutMs: integer(env, "UPLOAD_TIMEOUT_MS", 300_000, 1),

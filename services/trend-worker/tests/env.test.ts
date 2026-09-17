@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { defaultEnvPath, loadWorkerEnv } from "../src/cli/main.js";
+import { loadConfig } from "../src/config.js";
 
 const key = "HYPIT_TREND_WORKER_ENV_TEST";
 
@@ -45,4 +46,22 @@ test("service env files remain ignored while the example remains visible", async
   const gitignore = await readFile(new URL("../../../.gitignore", import.meta.url), "utf8");
   assert.match(gitignore, /^\.env$/mu);
   assert.match(gitignore, /^!\.env\.example$/mu);
+});
+
+test("library controls have conservative defaults and validate their bounds", () => {
+  const config = loadConfig({});
+  assert.equal(config.minSnapshotsForDownload, 2);
+  assert.equal(config.maxNewDownloadsPerRun, 3);
+  assert.equal(config.maxNewDownloadsPerDay, 30);
+  assert.equal(config.hotRetentionDays, 14);
+  assert.equal(config.r2SoftLimitGb, 8);
+  assert.equal(config.maxClassicVideos, 400);
+  for (const [name, value] of [
+    ["MIN_SNAPSHOTS_FOR_DOWNLOAD", "0"],
+    ["MAX_NEW_DOWNLOADS_PER_RUN", "0"],
+    ["MAX_NEW_DOWNLOADS_PER_DAY", "0"],
+    ["HOT_RETENTION_DAYS", "0"],
+    ["R2_SOFT_LIMIT_GB", "0"],
+    ["MAX_CLASSIC_VIDEOS", "-1"],
+  ] as const) assert.throws(() => loadConfig({ [name]: value }), new RegExp(name));
 });

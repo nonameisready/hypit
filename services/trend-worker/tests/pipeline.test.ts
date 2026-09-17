@@ -14,6 +14,7 @@ test("pipeline continues after one download failure and uses mocked R2 storage",
   const directory = await mkdtemp(join(tmpdir(), "trend-worker-pipeline-"));
   const db = new TrendDatabase(join(directory, "worker.sqlite"));
   const uploaded: string[] = [];
+  const objects = new Map<string, number>();
   const downloader: VideoDownloader = {
     async download(url, target) {
       if (url.includes("fail")) throw new Error("mock download failure");
@@ -23,12 +24,18 @@ test("pipeline continues after one download failure and uses mocked R2 storage",
   const storage: ObjectStorage = {
     async putFile(key) {
       uploaded.push(`media:${key}`);
+      objects.set(key, 16);
       return 16;
     },
     async putBytes(key) {
       uploaded.push(`metadata:${key}`);
+      objects.set(key, 2);
       return 2;
     },
+    async listObjects(prefix) {
+      return [...objects.entries()].filter(([key]) => key.startsWith(prefix)).map(([key, size]) => ({ key, size }));
+    },
+    async deleteObject(key) { objects.delete(key); },
   };
   const config = loadConfig({
     ...process.env,
@@ -36,6 +43,7 @@ test("pipeline continues after one download failure and uses mocked R2 storage",
     DATABASE_PATH: join(directory, "worker.sqlite"),
     TREND_PROVIDERS: "manual",
     MAX_VIDEO_AGE_HOURS: "72",
+    MIN_SNAPSHOTS_FOR_DOWNLOAD: "1",
     DELETE_LOCAL_AFTER_UPLOAD: "false",
   }, { manualUrls: [
     "https://www.tiktok.com/@creator/video/123456789",

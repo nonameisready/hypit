@@ -6,6 +6,7 @@ export function makeMetadata(
   fileSize: number,
   sha256: string,
   ingestionStatus: MetadataDocument["ingestion_status"],
+  options: Pick<MetadataDocument, "library_tier" | "raw_available" | "peak_viral_score" | "archived_at" | "archive_reason" | "prior_tier"> = {},
 ): MetadataDocument {
   return {
     source_url: scored.video.url,
@@ -21,6 +22,7 @@ export function makeMetadata(
     file_size: fileSize,
     sha256,
     ingestion_status: ingestionStatus,
+    ...options,
   };
 }
 

@@ -39,6 +39,7 @@ export type ScoredVideo = {
 };
 
 export type IngestionStatus = "discovered" | "ranked" | "downloaded" | "uploaded" | "failed";
+export type LibraryTier = "hot" | "classic" | "archived";
 
 export type MetadataDocument = {
   readonly source_url: string;
@@ -54,6 +55,12 @@ export type MetadataDocument = {
   readonly file_size: number;
   readonly sha256: string;
   readonly ingestion_status: IngestionStatus;
+  readonly library_tier?: LibraryTier;
+  readonly raw_available?: boolean;
+  readonly peak_viral_score?: number;
+  readonly archived_at?: string;
+  readonly archive_reason?: string;
+  readonly prior_tier?: Exclude<LibraryTier, "archived">;
 };
 
 export type Logger = {

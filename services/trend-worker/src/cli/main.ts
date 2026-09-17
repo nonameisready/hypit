@@ -26,18 +26,21 @@ export function loadWorkerEnv(path = defaultEnvPath): void {
 }
 
 function usage(): string {
-  return "Usage: trend-worker <discover|rank|download|upload|run> [--url <public-url>]\n";
+  return "Usage: trend-worker <discover|rank|download|upload|run|prune|stats> [--url <public-url>] [--json] [--dry-run]\n";
 }
 
-function parse(argv: readonly string[]): { readonly command: string; readonly urls: readonly string[]; readonly json: boolean } {
+function parse(argv: readonly string[]): { readonly command: string; readonly urls: readonly string[]; readonly json: boolean; readonly dryRun: boolean; readonly help: boolean } {
   const [command, ...rest] = argv;
-  if (command === undefined || command === "--help" || command === "help") throw new Error(usage());
+  if (command === undefined || command === "--help" || command === "help") return { command: "", urls: [], json: false, dryRun: false, help: true };
   const urls: string[] = [];
   let json = false;
+  let dryRun = false;
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index]!;
     if (arg === "--") continue;
+    if (arg === "--help") return { command, urls, json, dryRun, help: true };
     if (arg === "--json") { json = true; continue; }
+    if (arg === "--dry-run") { dryRun = true; continue; }
     if (arg === "--url") {
       const value = rest[++index];
       if (value === undefined) throw new Error("--url requires a value");
@@ -46,14 +49,19 @@ function parse(argv: readonly string[]): { readonly command: string; readonly ur
     }
     throw new Error(`unknown option ${arg}\n${usage()}`);
   }
-  return { command, urls, json };
+  if (dryRun && command !== "prune") throw new Error("--dry-run is only supported for prune\n");
+  return { command, urls, json, dryRun, help: false };
 }
 
 export async function runCli(argv = process.argv.slice(2)): Promise<void> {
-  const { command, urls, json } = parse(argv);
+  const { command, urls, json, dryRun, help } = parse(argv);
+  if (help) {
+    process.stdout.write(usage());
+    return;
+  }
   loadWorkerEnv();
   const config = loadConfig(process.env, { manualUrls: urls });
-  const storageNeeded = command === "upload" || command === "run";
+  const storageNeeded = command === "upload" || command === "run" || command === "prune" || command === "stats";
   let storage: R2Storage | undefined;
   if (storageNeeded) {
     requireR2(config);
@@ -61,12 +69,17 @@ export async function runCli(argv = process.argv.slice(2)): Promise<void> {
   }
   const { pipeline, db } = createPipeline(config, storage);
   try {
-    const result = command === "discover" ? await pipeline.discover()
-      : command === "rank" ? pipeline.rank()
-        : command === "download" ? await pipeline.download()
-          : command === "upload" ? await pipeline.upload()
-            : command === "run" ? await pipeline.run()
-              : undefined;
+    let result: unknown;
+    switch (command) {
+      case "discover": result = await pipeline.discover(); break;
+      case "rank": result = pipeline.rank(); break;
+      case "download": result = await pipeline.download(); break;
+      case "upload": result = await pipeline.upload(); break;
+      case "run": result = await pipeline.run(); break;
+      case "prune": result = await pipeline.prune({ dryRun }); break;
+      case "stats": result = await pipeline.stats(); break;
+      default: result = undefined;
+    }
     if (result === undefined) throw new Error(`unknown command ${command}\n${usage()}`);
     process.stdout.write(`${json ? JSON.stringify(result, null, 2) : `${JSON.stringify(result)}\n`}`);
   } finally {

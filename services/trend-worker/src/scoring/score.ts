@@ -41,11 +41,14 @@ function rawFeatures(candidate: ScoringCandidate, now: string): { readonly metri
   const previousViewVelocity = older === undefined || previous === undefined || olderHours === 0
     ? 0
     : metricDelta(previous.views, older.views) / olderHours;
+  const acceleration = older === undefined || previous === undefined || olderHours === 0
+    ? 0
+    : Math.max(0, currentVelocity.view_velocity - previousViewVelocity);
   return {
     metrics: { views: current.views, likes: current.likes, comments: current.comments, shares: current.shares },
     features: {
       ...currentVelocity,
-      acceleration: Math.max(0, currentVelocity.view_velocity - previousViewVelocity),
+      acceleration,
       video_age_hours: ageHours(candidate.video, now),
     },
   };

@@ -10,6 +10,8 @@
     "download": "node --import tsx src/cli/main.ts download",
     "upload": "node --import tsx src/cli/main.ts upload",
     "run": "node --import tsx src/cli/main.ts run",
+    "prune": "node --import tsx src/cli/main.ts prune",
+    "stats": "node --import tsx src/cli/main.ts stats",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test tests/**/*.test.ts"
   },

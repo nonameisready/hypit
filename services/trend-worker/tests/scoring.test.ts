@@ -24,3 +24,22 @@ test("viral scoring ranks metric velocity and applies freshness decay", () => {
   assert.ok((result[0]?.viral_score ?? 0) > (result[1]?.viral_score ?? 0));
   assert.ok((result[0]?.features.view_velocity ?? 0) > 0);
 });
+
+test("velocity needs two snapshots and acceleration needs three", () => {
+  const now = "2026-09-16T03:00:00.000Z";
+  const one = scoreCandidates([{ video: video("one"), snapshots: [{ captured_at: "2026-09-16T03:00:00.000Z", views: 100, likes: 10, comments: 2, shares: 1 }] }], now, { weights, freshnessHalfLifeHours: 48 })[0]!;
+  const two = scoreCandidates([{ video: video("two"), snapshots: [
+    { captured_at: "2026-09-16T01:00:00.000Z", views: 100, likes: 10, comments: 2, shares: 1 },
+    { captured_at: "2026-09-16T03:00:00.000Z", views: 300, likes: 30, comments: 6, shares: 3 },
+  ] }], now, { weights, freshnessHalfLifeHours: 48 })[0]!;
+  const three = scoreCandidates([{ video: video("three"), snapshots: [
+    { captured_at: "2026-09-16T00:00:00.000Z", views: 100, likes: 10, comments: 2, shares: 1 },
+    { captured_at: "2026-09-16T01:00:00.000Z", views: 150, likes: 15, comments: 3, shares: 2 },
+    { captured_at: "2026-09-16T03:00:00.000Z", views: 450, likes: 45, comments: 9, shares: 5 },
+  ] }], now, { weights, freshnessHalfLifeHours: 48 })[0]!;
+  assert.equal(one.features.view_velocity, 0);
+  assert.equal(one.features.acceleration, 0);
+  assert.ok(two.features.view_velocity > 0);
+  assert.equal(two.features.acceleration, 0);
+  assert.ok(three.features.acceleration > 0);
+});
